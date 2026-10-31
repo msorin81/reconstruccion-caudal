@@ -2,8 +2,9 @@
 __pycache__/
 *.pyc
 catboost_info/
-*.keras
 *.h5
+# Permitir modelos pre-entrenados en modelos/
+!modelos/*.keras
 Ensayos/
 benchmark_caudal/
 Script probados/

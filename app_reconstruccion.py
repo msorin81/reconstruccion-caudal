@@ -2,13 +2,12 @@ r"""
 Herramienta de reconstruccion de series de caudal diario
 usando el modelo CNN-BiLSTM v2.
 
-Ejecutar con Anaconda:
+Ejecutar localmente:
     streamlit run app_reconstruccion.py
 """
 
 import io
 import os
-import tempfile
 
 import numpy as np
 import pandas as pd
@@ -36,7 +35,7 @@ from tensorflow.keras.optimizers import Adam
 
 WINDOW = 15
 HORIZON = 7
-TOTAL_LEN = WINDOW + HORIZON + 1  # 23
+TOTAL_LEN = WINDOW + HORIZON + 1
 
 HP_CNN_BILSTM = {
     "units": 64,
@@ -72,16 +71,36 @@ COLUMNAS_REQUERIDAS = [
 
 COLUMNAS_IMPUTAR = ["tmp_minnma", "tmp_mdia", "hmd_rel_mdia"]
 
-# ── Configuración de página ──────────────────────────────────────────────────
+MODELOS_DIR = os.path.join(os.path.dirname(__file__), "modelos")
+
+ESTACIONES = {
+    "Buga": {
+        "archivo": "modelo_cnn_bilstm_v2_Buga.keras",
+        "descripcion": "Estacion Buga — Valle del Cauca",
+        "nse": 0.8125,
+    },
+    "Santander de Quilichao": {
+        "archivo": "modelo_cnn_bilstm_v2_Santander.keras",
+        "descripcion": "Estacion Santander de Quilichao — Cauca",
+        "nse": None,
+    },
+    "Totoro": {
+        "archivo": "modelo_cnn_bilstm_v2_Totoro.keras",
+        "descripcion": "Estacion Totoro — Cauca",
+        "nse": None,
+    },
+}
+
+# ── Configuracion de pagina ──────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Reconstrucción de Caudal — CNN-BiLSTM",
-    page_icon="🌊",
+    page_title="Reconstruccion de Caudal — CNN-BiLSTM",
+    page_icon="\U0001F30A",
     layout="wide",
 )
 
-st.title("🌊 Reconstrucción de Series de Caudal Diario")
-st.markdown("**Modelo CNN-BiLSTM v2** — Proyecto Aplicado de Maestría")
+st.title("\U0001F30A Reconstruccion de Series de Caudal Diario")
+st.markdown("**Modelo CNN-BiLSTM v2** — Proyecto Aplicado de Maestria")
 st.divider()
 
 
@@ -90,7 +109,7 @@ st.divider()
 
 def imputar_promedio_historico(df: pd.DataFrame, columna: str) -> pd.DataFrame:
     df = df.sort_values("Fecha_").copy()
-    df["ph"] = df.groupby(["Mes", "Día"])[columna].transform(
+    df["ph"] = df.groupby(["Mes", "Dia"])[columna].transform(
         lambda x: x.shift().expanding().mean()
     )
     df[columna] = df[columna].fillna(df["ph"])
@@ -171,6 +190,14 @@ def get_callbacks():
     ]
 
 
+def cargar_modelo_preentrenado(estacion):
+    info = ESTACIONES[estacion]
+    path = os.path.join(MODELOS_DIR, info["archivo"])
+    if not os.path.exists(path):
+        return None
+    return tf.keras.models.load_model(path)
+
+
 def reconstruir_gaps(model, df_full, scaler_X, scaler_y, umbral_gap=100):
     target = "Caudal (m^3/s)"
     serie_caudal = df_full[target]
@@ -217,10 +244,10 @@ def reconstruir_gaps(model, df_full, scaler_X, scaler_y, umbral_gap=100):
     return df_final
 
 
-# ── Sidebar: carga de datos ──────────────────────────────────────────────────
+# ── Sidebar ──────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.header("📂 Datos de Entrada")
+    st.header("\U0001F4C2 Datos de Entrada")
 
     archivo = st.file_uploader(
         "Subir dataset (CSV o Excel)",
@@ -230,61 +257,65 @@ with st.sidebar:
     )
 
     st.divider()
-    st.header("🧠 Modelo")
+    st.header("\U0001F9E0 Modelo")
 
     modelo_opcion = st.radio(
         "Fuente del modelo",
-        ["Entrenar nuevo modelo", "Cargar modelo pre-entrenado (.keras)"],
-        help="Si ya tiene un modelo entrenado, puede cargarlo directamente",
+        [
+            "Modelo pre-entrenado (recomendado)",
+            "Entrenar nuevo modelo",
+        ],
+        help="Use el modelo pre-entrenado para resultados inmediatos, "
+        "o entrene uno nuevo si tiene un dataset de otra estacion",
     )
 
-    modelo_archivo = None
-    if modelo_opcion == "Cargar modelo pre-entrenado (.keras)":
-        modelo_archivo = st.file_uploader(
-            "Subir modelo .keras",
-            type=["keras"],
+    if modelo_opcion == "Modelo pre-entrenado (recomendado)":
+        estacion = st.selectbox(
+            "Estacion",
+            list(ESTACIONES.keys()),
+            help="Seleccione la estacion correspondiente al dataset",
         )
+        info_est = ESTACIONES[estacion]
+        st.caption(f"\U0001F4CD {info_est['descripcion']}")
+        if info_est["nse"]:
+            st.caption(f"\U0001F4CA NSE validacion: {info_est['nse']}")
 
     st.divider()
-    st.header("⚙️ Parámetros")
+    st.header("⚙️ Parametros")
 
     umbral_gap = st.slider(
-        "Umbral máximo de gap (días)",
+        "Umbral maximo de gap (dias)",
         min_value=10,
         max_value=500,
         value=100,
         step=10,
-        help="Gaps más largos que este umbral no se reconstruyen",
+        help="Gaps mas largos que este umbral no se reconstruyen",
     )
 
-    epochs = st.slider(
-        "Épocas de entrenamiento",
-        min_value=50,
-        max_value=300,
-        value=200,
-        step=10,
-        help="Solo aplica si entrena un nuevo modelo",
-    )
-
-    batch_size = st.selectbox(
-        "Batch size", [16, 32, 64, 128], index=1
-    )
+    if modelo_opcion == "Entrenar nuevo modelo":
+        epochs = st.slider(
+            "Epocas de entrenamiento",
+            min_value=50,
+            max_value=300,
+            value=200,
+            step=10,
+        )
+        batch_size = st.selectbox("Batch size", [16, 32, 64, 128], index=1)
 
 # ── Contenido principal ──────────────────────────────────────────────────────
 
 if archivo is None:
     st.info(
-        "👈 Suba un dataset en la barra lateral para comenzar.\n\n"
+        "\U0001F448 Suba un dataset en la barra lateral para comenzar.\n\n"
         "**Columnas requeridas:**\n"
         "- `Fecha_` — fecha en formato YYYY-MM-DD\n"
-        "- `prcptcion` — precipitación diaria (mm)\n"
+        "- `prcptcion` — precipitacion diaria (mm)\n"
         "- `tmp_mdia` — temperatura media diaria (°C)\n"
         "- `hmd_rel_mdia` — humedad relativa media (%)\n"
-        "- `evp_clclada` — evaporación calculada (mm)\n"
-        "- `rdcion_slar` — radiación solar (cal/cm²)\n"
-        "- `Caudal (m^3/s)` — caudal medio diario (con valores faltantes = vacío o NaN)\n\n"
-        "**Columnas opcionales** (para imputación de faltantes en variables explicativas):\n"
-        "- `tmp_minnma`, `Mes`, `Día`"
+        "- `evp_clclada` — evaporacion calculada (mm)\n"
+        "- `rdcion_slar` — radiacion solar (cal/cm²)\n"
+        "- `Caudal (m^3/s)` — caudal medio diario (valores faltantes = vacio o NaN)\n\n"
+        "**Modelos pre-entrenados disponibles:** Buga, Santander de Quilichao, Totoro"
     )
     st.stop()
 
@@ -303,7 +334,8 @@ try:
         if len(sheet_names) > 1:
             with st.sidebar:
                 selected_sheet = st.selectbox(
-                    "Hoja del Excel", sheet_names,
+                    "Hoja del Excel",
+                    sheet_names,
                     index=sheet_names.index(default_sheet),
                 )
         else:
@@ -330,8 +362,10 @@ with st.spinner("Preprocesando datos..."):
 
     if "Mes" not in df_raw.columns:
         df_raw["Mes"] = df_raw["Fecha_"].dt.month
-    if "Día" not in df_raw.columns:
-        df_raw["Día"] = df_raw["Fecha_"].dt.day
+    if "Dia" not in df_raw.columns and "Día" not in df_raw.columns:
+        df_raw["Dia"] = df_raw["Fecha_"].dt.day
+    if "Día" in df_raw.columns and "Dia" not in df_raw.columns:
+        df_raw["Dia"] = df_raw["Día"]
 
     df_imputado = df_raw.copy()
     for col in COLUMNAS_IMPUTAR:
@@ -351,7 +385,7 @@ pct_faltante = n_faltante / n_total * 100
 
 # ── Vista previa ─────────────────────────────────────────────────────────────
 
-st.header("📊 Resumen del Dataset")
+st.header("\U0001F4CA Resumen del Dataset")
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Registros totales", f"{n_total:,}")
@@ -362,7 +396,7 @@ col4.metric("% Faltante", f"{pct_faltante:.1f}%")
 with st.expander("Vista previa del dataset", expanded=False):
     st.dataframe(df_full.head(20), use_container_width=True)
 
-# ── Gráfico de datos crudos ─────────────────────────────────────────────────
+# ── Grafico de datos crudos ──────────────────────────────────────────────────
 
 fig_raw = go.Figure()
 fig_raw.add_trace(
@@ -385,15 +419,15 @@ fig_raw.update_layout(
 st.plotly_chart(fig_raw, use_container_width=True)
 
 if n_faltante == 0:
-    st.success("El dataset no tiene datos faltantes. No se requiere reconstrucción.")
+    st.success("El dataset no tiene datos faltantes. No se requiere reconstruccion.")
     st.stop()
 
-# ── Construcción de secuencias ───────────────────────────────────────────────
+# ── Construccion de secuencias y scalers ─────────────────────────────────────
 
 st.divider()
-st.header("🧠 Modelo CNN-BiLSTM v2")
+st.header("\U0001F9E0 Modelo CNN-BiLSTM v2")
 
-with st.spinner("Construyendo secuencias de entrenamiento..."):
+with st.spinner("Construyendo secuencias..."):
     X_all, y_all, fechas_all, scaler_X, scaler_y = construir_secuencias(
         df_full, FEATURES_V2, target, WINDOW, HORIZON, fit=True
     )
@@ -402,41 +436,43 @@ with st.spinner("Construyendo secuencias de entrenamiento..."):
 st.info(
     f"Secuencias construidas: **{X_all.shape[0]:,}** "
     f"(shape: {X_all.shape[1]}×{X_all.shape[2]}) — "
-    f"Ventana: {WINDOW} días pasados + 1 objetivo + {HORIZON} días futuros"
+    f"Ventana: {WINDOW} dias pasados + 1 objetivo + {HORIZON} dias futuros"
 )
 
-# ── Entrenar o cargar modelo ─────────────────────────────────────────────────
+# ── Cargar o entrenar modelo ─────────────────────────────────────────────────
 
 model = None
 
-if modelo_opcion == "Cargar modelo pre-entrenado (.keras)" and modelo_archivo is not None:
-    with st.spinner("Cargando modelo pre-entrenado..."):
-        with tempfile.NamedTemporaryFile(suffix=".keras", delete=False) as tmp:
-            tmp.write(modelo_archivo.read())
-            tmp_path = tmp.name
-        try:
-            model = tf.keras.models.load_model(tmp_path)
-            st.success(
-                f"Modelo cargado: **{model.name}** — "
-                f"{model.count_params():,} parámetros"
-            )
-        except Exception as e:
-            st.error(f"Error al cargar el modelo: {e}")
-        finally:
-            os.unlink(tmp_path)
+if modelo_opcion == "Modelo pre-entrenado (recomendado)":
+    with st.spinner(f"Cargando modelo pre-entrenado para {estacion}..."):
+        model = cargar_modelo_preentrenado(estacion)
+
+    if model is not None:
+        st.success(
+            f"Modelo cargado: **CNN_BiLSTM_v2 — {estacion}** "
+            f"({model.count_params():,} parametros)"
+        )
+    else:
+        st.error(
+            f"No se encontro el modelo para {estacion}. "
+            "Seleccione 'Entrenar nuevo modelo' en la barra lateral."
+        )
+        st.stop()
 
 elif modelo_opcion == "Entrenar nuevo modelo":
-    if st.button("🚀 Entrenar modelo", type="primary", use_container_width=True):
+    if st.button("\U0001F680 Entrenar modelo", type="primary", use_container_width=True):
         progress_bar = st.progress(0, text="Inicializando modelo...")
         status_text = st.empty()
 
         tf.keras.backend.clear_session()
         model = build_cnn_bilstm_v2(input_shape, HP_CNN_BILSTM)
-        model.compile(optimizer=Adam(learning_rate=HP_CNN_BILSTM["learning_rate"]), loss="mse")
+        model.compile(
+            optimizer=Adam(learning_rate=HP_CNN_BILSTM["learning_rate"]), loss="mse"
+        )
 
         status_text.text(
-            f"Entrenando CNN_BiLSTM_v2 ({model.count_params():,} parámetros) — "
-            f"{epochs} épocas máx..."
+            f"Entrenando CNN_BiLSTM_v2 ({model.count_params():,} parametros) — "
+            f"{epochs} epocas max..."
         )
 
         class ProgressCallback(tf.keras.callbacks.Callback):
@@ -444,7 +480,7 @@ elif modelo_opcion == "Entrenar nuevo modelo":
                 pct = min((epoch + 1) / epochs, 1.0)
                 progress_bar.progress(
                     pct,
-                    text=f"Época {epoch+1}/{epochs} — "
+                    text=f"Epoca {epoch+1}/{epochs} — "
                     f"loss: {logs.get('loss', 0):.6f} — "
                     f"val_loss: {logs.get('val_loss', 0):.6f}",
                 )
@@ -466,7 +502,7 @@ elif modelo_opcion == "Entrenar nuevo modelo":
         best_val_loss = min(history.history["val_loss"])
 
         st.success(
-            f"Modelo entrenado — Mejor época: {best_epoch} — "
+            f"Modelo entrenado — Mejor epoca: {best_epoch} — "
             f"val_loss: {best_val_loss:.6f}"
         )
 
@@ -501,17 +537,13 @@ elif modelo_opcion == "Entrenar nuevo modelo":
         )
         fig_loss.update_layout(
             title="Curva de entrenamiento",
-            xaxis_title="Época",
+            xaxis_title="Epoca",
             yaxis_title="MSE Loss",
             template="plotly_white",
             height=300,
             margin=dict(t=40, b=40),
         )
         st.plotly_chart(fig_loss, use_container_width=True)
-
-elif modelo_opcion == "Cargar modelo pre-entrenado (.keras)" and modelo_archivo is None:
-    st.warning("Suba un archivo .keras en la barra lateral.")
-    st.stop()
 
 if model is None and "model" in st.session_state:
     model = st.session_state["model"]
@@ -522,10 +554,10 @@ if model is None and "model" in st.session_state:
 if model is None:
     st.stop()
 
-# ── Reconstrucción ───────────────────────────────────────────────────────────
+# ── Reconstruccion ───────────────────────────────────────────────────────────
 
 st.divider()
-st.header("🔧 Reconstrucción de Datos Faltantes")
+st.header("\U0001F527 Reconstruccion de Datos Faltantes")
 
 with st.spinner("Reconstruyendo gaps..."):
     df_final = reconstruir_gaps(model, df_full, scaler_X, scaler_y, umbral_gap)
@@ -538,14 +570,14 @@ n_obs_f = obs_mask.sum()
 n_rec_f = rec_mask.sum()
 n_nrec_f = nrec_mask.sum()
 
-# ── Métricas de reconstrucción ───────────────────────────────────────────────
+# ── Metricas de reconstruccion ───────────────────────────────────────────────
 
-st.subheader("📈 Resultados Cuantitativos")
+st.subheader("\U0001F4C8 Resultados Cuantitativos")
 
 col1, col2, col3 = st.columns(3)
-col1.metric("Días observados", f"{n_obs_f:,}", help="Datos originales del dataset")
+col1.metric("Dias observados", f"{n_obs_f:,}", help="Datos originales del dataset")
 col2.metric(
-    "Días reconstruidos",
+    "Dias reconstruidos",
     f"{n_rec_f:,}",
     delta=f"{n_rec_f / n_total * 100:.1f}% del total",
     help="Datos imputados por el modelo CNN-BiLSTM v2",
@@ -553,15 +585,15 @@ col2.metric(
 col3.metric(
     "Gaps no reconstruidos",
     f"{n_nrec_f:,}",
-    delta=f">{umbral_gap} días consecutivos",
+    delta=f">{umbral_gap} dias consecutivos",
     delta_color="inverse",
-    help=f"Gaps mayores a {umbral_gap} días consecutivos",
+    help=f"Gaps mayores a {umbral_gap} dias consecutivos",
 )
 
 cobertura = (n_obs_f + n_rec_f) / n_total * 100
 st.progress(cobertura / 100, text=f"Cobertura total: {cobertura:.1f}%")
 
-# ── Análisis de gaps ────────────────────────────────────────────────────────
+# ── Analisis de gaps ─────────────────────────────────────────────────────────
 
 caudal_orig = df_full[target]
 is_gap = caudal_orig.isna()
@@ -574,11 +606,11 @@ if len(gap_only) > 0:
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total de gaps", f"{len(gap_lengths):,}")
-    col2.metric("Longitud media", f"{np.mean(gap_lengths):.1f} días")
-    col3.metric("Longitud máxima", f"{np.max(gap_lengths):,} días")
-    col4.metric("Longitud mediana", f"{np.median(gap_lengths):.0f} días")
+    col2.metric("Longitud media", f"{np.mean(gap_lengths):.1f} dias")
+    col3.metric("Longitud maxima", f"{np.max(gap_lengths):,} dias")
+    col4.metric("Longitud mediana", f"{np.median(gap_lengths):.0f} dias")
 
-    with st.expander("Distribución de longitud de gaps", expanded=False):
+    with st.expander("Distribucion de longitud de gaps", expanded=False):
         fig_hist = go.Figure()
         fig_hist.add_trace(
             go.Histogram(
@@ -589,8 +621,8 @@ if len(gap_only) > 0:
             )
         )
         fig_hist.update_layout(
-            title="Distribución de longitud de gaps",
-            xaxis_title="Longitud del gap (días)",
+            title="Distribucion de longitud de gaps",
+            xaxis_title="Longitud del gap (dias)",
             yaxis_title="Frecuencia",
             template="plotly_white",
             height=300,
@@ -598,9 +630,9 @@ if len(gap_only) > 0:
         )
         st.plotly_chart(fig_hist, use_container_width=True)
 
-# ── Gráfico de la serie reconstruida ─────────────────────────────────────────
+# ── Grafico de la serie reconstruida ─────────────────────────────────────────
 
-st.subheader("📉 Serie de Caudal Reconstruida")
+st.subheader("\U0001F4C9 Serie de Caudal Reconstruida")
 
 fig = go.Figure()
 
@@ -612,7 +644,7 @@ fig.add_trace(
         x=df_final.index,
         y=q_obs,
         mode="lines",
-        name=f"Observado ({n_obs_f:,} días)",
+        name=f"Observado ({n_obs_f:,} dias)",
         line=dict(color="#4682B4", width=1),
     )
 )
@@ -622,7 +654,7 @@ fig.add_trace(
         x=df_final.index,
         y=q_rec,
         mode="lines",
-        name=f"Reconstruido ({n_rec_f:,} días)",
+        name=f"Reconstruido ({n_rec_f:,} dias)",
         line=dict(color="#DC143C", width=1.5),
     )
 )
@@ -672,9 +704,9 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# ── Estadísticas de la serie reconstruida ────────────────────────────────────
+# ── Estadisticas comparativas ────────────────────────────────────────────────
 
-st.subheader("📋 Estadísticas Comparativas")
+st.subheader("\U0001F4CB Estadisticas Comparativas")
 
 q_obs_vals = df_final.loc[obs_mask, "Caudal_m3s"].dropna()
 q_rec_vals = df_final.loc[rec_mask, "Caudal_m3s"].dropna()
@@ -701,7 +733,7 @@ if len(q_rec_vals) > 0:
                 q_rec_vals.max(),
             ],
         },
-        index=["Media", "Desv. Est.", "Mínimo", "Q25", "Mediana", "Q75", "Máximo"],
+        index=["Media", "Desv. Est.", "Minimo", "Q25", "Mediana", "Q75", "Maximo"],
     )
     stats = stats.round(3)
 
@@ -717,7 +749,7 @@ if len(q_rec_vals) > 0:
             go.Box(y=q_rec_vals, name="Reconstruido", marker_color="#DC143C")
         )
         fig_box.update_layout(
-            title="Distribución de caudales",
+            title="Distribucion de caudales",
             yaxis_title="Caudal (m³/s)",
             template="plotly_white",
             height=350,
@@ -728,7 +760,7 @@ if len(q_rec_vals) > 0:
 
 # ── Tabla de datos reconstruidos ─────────────────────────────────────────────
 
-st.subheader("📄 Datos Reconstruidos")
+st.subheader("\U0001F4C4 Datos Reconstruidos")
 
 df_display = df_final.copy()
 df_display.index = df_display.index.strftime("%Y-%m-%d")
@@ -745,15 +777,15 @@ with tab2:
 # ── Descarga ─────────────────────────────────────────────────────────────────
 
 st.divider()
-st.subheader("💾 Descargar Resultados")
+st.subheader("\U0001F4BE Descargar Resultados")
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
     buf_csv = io.BytesIO()
     df_final.to_csv(buf_csv, encoding="utf-8-sig")
     st.download_button(
-        label="📥 Descargar CSV completo",
+        label="\U0001F4E5 Descargar CSV completo",
         data=buf_csv.getvalue(),
         file_name="caudal_reconstruido.csv",
         mime="text/csv",
@@ -768,23 +800,17 @@ with col2:
             writer, sheet_name="Solo_Reconstruidos"
         )
     st.download_button(
-        label="📥 Descargar Excel",
+        label="\U0001F4E5 Descargar Excel",
         data=buf_xlsx.getvalue(),
         file_name="caudal_reconstruido.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
 
-with col3:
-    if st.button("💾 Guardar modelo entrenado", use_container_width=True):
-        save_path = os.path.join(os.path.dirname(__file__), "modelo_cnn_bilstm_v2_app.keras")
-        model.save(save_path)
-        st.success(f"Modelo guardado en: `{save_path}`")
-
 # ── Footer ───────────────────────────────────────────────────────────────────
 
 st.divider()
 st.caption(
-    "🌊 **CNN-BiLSTM v2** — Reconstrucción de series de caudal diario | "
-    "Proyecto Aplicado de Maestría — 2026"
+    "\U0001F30A **CNN-BiLSTM v2** — Reconstruccion de series de caudal diario | "
+    "Proyecto Aplicado de Maestria — 2026"
 )
