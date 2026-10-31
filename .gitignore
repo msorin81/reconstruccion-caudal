@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+catboost_info/
+*.keras
+*.h5
+Ensayos/
+benchmark_caudal/
+Script probados/
+Profe Milver/
+mapas_cuencas/
+2026-09-01-Resultados/
+.playwright-mcp/
+*.png
+*.xlsx
+*.xls
+*.csv
+*.ipynb
