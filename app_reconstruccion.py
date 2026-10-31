@@ -71,17 +71,17 @@ ESTACIONES = {
     "Buga": {
         "archivo": "modelo_cnn_bilstm_v2_Buga.keras",
         "descripcion": "Valle del Cauca",
-        "nse": 0.8125,
+        "nse": 0.9713,
     },
     "Santander de Quilichao": {
         "archivo": "modelo_cnn_bilstm_v2_Santander.keras",
         "descripcion": "Cauca",
-        "nse": None,
+        "nse": 0.9755,
     },
     "Totoro": {
         "archivo": "modelo_cnn_bilstm_v2_Totoro.keras",
         "descripcion": "Cauca",
-        "nse": None,
+        "nse": 0.9682,
     },
 }
 
