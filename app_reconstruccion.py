@@ -277,6 +277,16 @@ def build_cnn_bilstm_v2(input_shape, hp):
     return Model(inp, out, name="CNN_BiLSTM_v2")
 
 
+def calcular_nse(obs, pred):
+    """Nash-Sutcliffe Efficiency en escala original (m3/s)."""
+    mean_obs = np.mean(obs)
+    ss_res = np.sum((obs - pred) ** 2)
+    ss_tot = np.sum((obs - mean_obs) ** 2)
+    if ss_tot == 0:
+        return np.nan
+    return 1 - ss_res / ss_tot
+
+
 def get_callbacks():
     return [
         EarlyStopping(
@@ -613,29 +623,60 @@ with tab_resumen:
             gap_sizes = gap_only.value_counts().sort_index()
             gap_lengths = gap_sizes.values
 
+            n_gaps_rec = int(np.sum(gap_lengths <= umbral_gap))
+            n_gaps_nrec = int(np.sum(gap_lengths > umbral_gap))
+            dias_rec = int(np.sum(gap_lengths[gap_lengths <= umbral_gap]))
+            dias_nrec = int(np.sum(gap_lengths[gap_lengths > umbral_gap]))
+
             st.markdown("##### Analisis de gaps")
-            g1, g2, g3, g4 = st.columns(4)
-            g1.metric("Num. de gaps", f"{len(gap_lengths):,}")
-            g2.metric("Longitud media", f"{np.mean(gap_lengths):.1f} d")
-            g3.metric("Longitud max.", f"{np.max(gap_lengths):,} d")
-            g4.metric("Mediana", f"{np.median(gap_lengths):.0f} d")
+            g1, g2, g3, g4, g5 = st.columns(5)
+            g1.metric("Total gaps", f"{len(gap_lengths):,}")
+            g2.metric(f"Gaps ≤{umbral_gap}d", f"{n_gaps_rec:,}", delta=f"{dias_rec:,} dias")
+            g3.metric(f"Gaps >{umbral_gap}d", f"{n_gaps_nrec:,}", delta=f"{dias_nrec:,} dias", delta_color="inverse")
+            g4.metric("Longitud max.", f"{np.max(gap_lengths):,} d")
+            g5.metric("Total faltantes", f"{n_faltante:,} d", delta=f"{pct_faltante:.1f}%", delta_color="inverse")
 
             fig_hist = go.Figure()
-            fig_hist.add_trace(
-                go.Histogram(
-                    x=gap_lengths,
-                    nbinsx=30,
-                    marker_color=COLOR_OBSERVED,
-                    opacity=0.8,
+            gaps_rec_arr = gap_lengths[gap_lengths <= umbral_gap]
+            gaps_nrec_arr = gap_lengths[gap_lengths > umbral_gap]
+
+            if len(gaps_rec_arr) > 0:
+                fig_hist.add_trace(
+                    go.Histogram(
+                        x=gaps_rec_arr,
+                        nbinsx=20,
+                        marker_color=COLOR_OBSERVED,
+                        opacity=0.8,
+                        name=f"Reconstruibles (≤{umbral_gap}d)",
+                    )
                 )
+            if len(gaps_nrec_arr) > 0:
+                fig_hist.add_trace(
+                    go.Histogram(
+                        x=gaps_nrec_arr,
+                        nbinsx=10,
+                        marker_color="#aaaaaa",
+                        opacity=0.6,
+                        name=f"No reconstruibles (>{umbral_gap}d)",
+                    )
+                )
+
+            fig_hist.add_vline(
+                x=umbral_gap,
+                line_dash="dash",
+                line_color=COLOR_RECONSTRUCTED,
+                annotation_text=f"Umbral: {umbral_gap}d",
+                annotation_position="top right",
             )
             fig_hist.update_layout(
                 title="Distribucion de longitud de gaps",
                 xaxis_title="Longitud (dias)",
                 yaxis_title="Frecuencia",
                 template="plotly_white",
-                height=280,
+                height=300,
                 margin=dict(t=40, b=40, l=60, r=20),
+                barmode="overlay",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -729,9 +770,25 @@ with tab_reconstruccion:
                 best_epoch = np.argmin(history.history["val_loss"]) + 1
                 best_val_loss = min(history.history["val_loss"])
 
+                n_val = max(1, int(len(X_all) * 0.10))
+                X_val = X_all[-n_val:]
+                y_val_sc = y_all[-n_val:]
+                y_pred_sc = model.predict(X_val, verbose=0).flatten()
+                y_val_m3s = np.expm1(
+                    scaler_y.inverse_transform(y_val_sc.reshape(-1, 1)).flatten()
+                )
+                y_pred_m3s = np.maximum(
+                    np.expm1(
+                        scaler_y.inverse_transform(y_pred_sc.reshape(-1, 1)).flatten()
+                    ),
+                    0,
+                )
+                nse_val = calcular_nse(y_val_m3s, y_pred_m3s)
+
                 st.success(
                     f"Modelo entrenado — Mejor epoca: {best_epoch} | "
-                    f"val_loss: {best_val_loss:.6f}"
+                    f"val_loss: {best_val_loss:.6f} | "
+                    f"**NSE (validacion): {nse_val:.4f}**"
                 )
 
                 st.session_state["model"] = model
@@ -739,6 +796,7 @@ with tab_reconstruccion:
                 st.session_state["scaler_y"] = scaler_y
                 st.session_state["df_full"] = df_full
                 st.session_state["history"] = history.history
+                st.session_state["nse_val"] = nse_val
 
                 fig_loss = go.Figure()
                 fig_loss.add_trace(
@@ -884,30 +942,29 @@ with tab_reconstruccion:
 
         q_obs_vals = df_final.loc[obs_mask, "Caudal_m3s"].dropna()
         q_rec_vals = df_final.loc[rec_mask, "Caudal_m3s"].dropna()
+        q_completa = df_final.loc[obs_mask | rec_mask, "Caudal_m3s"].dropna()
 
         if len(q_rec_vals) > 0:
+            def serie_stats(s):
+                return [
+                    len(s),
+                    s.mean(),
+                    s.std(),
+                    s.min(),
+                    s.quantile(0.25),
+                    s.median(),
+                    s.quantile(0.75),
+                    s.max(),
+                ]
+
             stats = pd.DataFrame(
                 {
-                    "Observado": [
-                        q_obs_vals.mean(),
-                        q_obs_vals.std(),
-                        q_obs_vals.min(),
-                        q_obs_vals.quantile(0.25),
-                        q_obs_vals.median(),
-                        q_obs_vals.quantile(0.75),
-                        q_obs_vals.max(),
-                    ],
-                    "Reconstruido": [
-                        q_rec_vals.mean(),
-                        q_rec_vals.std(),
-                        q_rec_vals.min(),
-                        q_rec_vals.quantile(0.25),
-                        q_rec_vals.median(),
-                        q_rec_vals.quantile(0.75),
-                        q_rec_vals.max(),
-                    ],
+                    f"Observado": serie_stats(q_obs_vals),
+                    f"Reconstruido": serie_stats(q_rec_vals),
+                    f"Obs + Rec": serie_stats(q_completa),
                 },
                 index=[
+                    "N (dias)",
                     "Media",
                     "Desv. Est.",
                     "Minimo",
@@ -917,7 +974,8 @@ with tab_reconstruccion:
                     "Maximo",
                 ],
             )
-            stats = stats.round(3)
+            stats.iloc[0] = stats.iloc[0].astype(int)
+            stats.iloc[1:] = stats.iloc[1:].round(3)
 
             col_t, col_b = st.columns(2)
             with col_t:
@@ -925,19 +983,26 @@ with tab_reconstruccion:
             with col_b:
                 fig_box = go.Figure()
                 fig_box.add_trace(
-                    go.Box(y=q_obs_vals, name="Observado", marker_color=COLOR_OBSERVED)
+                    go.Box(y=q_obs_vals, name=f"Observado ({len(q_obs_vals):,}d)", marker_color=COLOR_OBSERVED)
                 )
                 fig_box.add_trace(
                     go.Box(
                         y=q_rec_vals,
-                        name="Reconstruido",
+                        name=f"Reconstruido ({len(q_rec_vals):,}d)",
                         marker_color=COLOR_RECONSTRUCTED,
+                    )
+                )
+                fig_box.add_trace(
+                    go.Box(
+                        y=q_completa,
+                        name=f"Obs + Rec ({len(q_completa):,}d)",
+                        marker_color="#2ca02c",
                     )
                 )
                 fig_box.update_layout(
                     yaxis_title="Caudal (m3/s)",
                     template="plotly_white",
-                    height=350,
+                    height=380,
                     margin=dict(t=20, b=40, l=60, r=20),
                     showlegend=False,
                 )
