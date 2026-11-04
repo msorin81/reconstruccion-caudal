@@ -401,6 +401,12 @@ with st.sidebar:
     )
 
     if modelo_opcion == "Entrenar nuevo modelo":
+        division = st.selectbox(
+            "Division train/val",
+            ["80/20", "85/15 (recomendado)", "90/10"],
+            index=1,
+        )
+        val_split = {"80/20": 0.20, "85/15 (recomendado)": 0.15, "90/10": 0.10}[division]
         epochs = st.slider("Epocas", 50, 300, 200, 10)
         batch_size = st.selectbox("Batch size", [16, 32, 64, 128], index=1)
 
@@ -521,7 +527,7 @@ futuro → pasado), capturando dependencias temporales a largo plazo.
 | Learning rate | 0.001 |
 | Optimizador | Adam |
 | Loss | MSE |
-| Division train/val | 85% / 15% |
+| Division train/val | 80/20, 85/15 o 90/10 |
 | EarlyStopping | patience 25 |
 | ReduceLROnPlateau | patience 12, factor 0.5 |
 
@@ -809,7 +815,7 @@ with tab_reconstruccion:
                     y_all,
                     epochs=epochs,
                     batch_size=batch_size,
-                    validation_split=0.15,
+                    validation_split=val_split,
                     callbacks=get_callbacks() + [ProgressCallback()],
                     verbose=0,
                 )
@@ -820,7 +826,7 @@ with tab_reconstruccion:
                 best_epoch = np.argmin(history.history["val_loss"]) + 1
                 best_val_loss = min(history.history["val_loss"])
 
-                n_val = max(1, int(len(X_all) * 0.15))
+                n_val = max(1, int(len(X_all) * val_split))
                 X_val = X_all[-n_val:]
                 y_val_sc = y_all[-n_val:]
                 y_pred_sc = model.predict(X_val, verbose=0).flatten()
