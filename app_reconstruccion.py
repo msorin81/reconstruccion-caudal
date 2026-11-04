@@ -994,13 +994,12 @@ with tab_reconstruccion:
 
         # ── Estadisticas comparativas ────────────────────────────────────────
 
-        st.markdown("##### Estadisticas comparativas")
+        st.markdown("##### Serie sin reconstruccion vs con reconstruccion")
 
-        q_obs_vals = df_final.loc[obs_mask, "Caudal_m3s"].dropna()
-        q_rec_vals = df_final.loc[rec_mask, "Caudal_m3s"].dropna()
-        q_completa = df_final.loc[obs_mask | rec_mask, "Caudal_m3s"].dropna()
+        q_sin = df_final.loc[obs_mask, "Caudal_m3s"].dropna()
+        q_con = df_final.loc[obs_mask | rec_mask, "Caudal_m3s"].dropna()
 
-        if len(q_rec_vals) > 0:
+        if len(q_con) > 0:
             def serie_stats(s):
                 return [
                     len(s),
@@ -1015,9 +1014,8 @@ with tab_reconstruccion:
 
             stats = pd.DataFrame(
                 {
-                    f"Observado": serie_stats(q_obs_vals),
-                    f"Reconstruido": serie_stats(q_rec_vals),
-                    f"Obs + Rec": serie_stats(q_completa),
+                    f"Sin reconstruccion": serie_stats(q_sin),
+                    f"Con reconstruccion": serie_stats(q_con),
                 },
                 index=[
                     "N (dias)",
@@ -1039,19 +1037,16 @@ with tab_reconstruccion:
             with col_b:
                 fig_box = go.Figure()
                 fig_box.add_trace(
-                    go.Box(y=q_obs_vals, name=f"Observado ({len(q_obs_vals):,}d)", marker_color=COLOR_OBSERVED)
-                )
-                fig_box.add_trace(
                     go.Box(
-                        y=q_rec_vals,
-                        name=f"Reconstruido ({len(q_rec_vals):,}d)",
-                        marker_color=COLOR_RECONSTRUCTED,
+                        y=q_sin,
+                        name=f"Sin reconstruccion ({len(q_sin):,}d)",
+                        marker_color=COLOR_OBSERVED,
                     )
                 )
                 fig_box.add_trace(
                     go.Box(
-                        y=q_completa,
-                        name=f"Obs + Rec ({len(q_completa):,}d)",
+                        y=q_con,
+                        name=f"Con reconstruccion ({len(q_con):,}d)",
                         marker_color="#2ca02c",
                     )
                 )
