@@ -480,8 +480,58 @@ datos faltantes en series de caudal diario.
         st.markdown(
             "#### Entrenar para otra estacion\n"
             "Si su dataset corresponde a una estacion diferente, "
-            "seleccione *Entrenar nuevo modelo* en la barra lateral."
+            "seleccione *Entrenar nuevo modelo* en la barra lateral. "
+            "Se utiliza la misma arquitectura y los mismos hiperparametros "
+            "optimizados en el proyecto, aplicados a sus datos."
         )
+
+    st.markdown("---")
+    with st.expander("Arquitectura del modelo CNN-BiLSTM v2", expanded=False):
+        col_arch, col_hp = st.columns(2)
+        with col_arch:
+            st.markdown(
+                """
+**Estructura de la red neuronal:**
+
+| Capa | Configuracion |
+|------|---------------|
+| **Entrada** | Secuencia de 23 pasos × 10 features |
+| **Conv1D** | 32 filtros, kernel 7, ReLU, padding same |
+| **BiLSTM** | 64 unidades bidireccionales, dropout 0.1 |
+| **Dropout** | 10% |
+| **Dense** | 16 neuronas, ReLU |
+| **Salida** | 1 neurona (caudal predicho) |
+
+La capa **Conv1D** extrae patrones locales en la ventana temporal
+(estacionalidad, picos). La capa **BiLSTM** (Bidirectional LSTM)
+procesa la secuencia en ambas direcciones (pasado → futuro y
+futuro → pasado), capturando dependencias temporales a largo plazo.
+"""
+            )
+        with col_hp:
+            st.markdown(
+                f"""
+**Hiperparametros y entrenamiento:**
+
+| Parametro | Valor |
+|-----------|-------|
+| Ventana pasada | {WINDOW} dias |
+| Horizonte futuro | {HORIZON} dias |
+| Secuencia total | {TOTAL_LEN} pasos |
+| Learning rate | 0.001 |
+| Optimizador | Adam |
+| Loss | MSE |
+| Division train/val | 85% / 15% |
+| EarlyStopping | patience 25 |
+| ReduceLROnPlateau | patience 12, factor 0.5 |
+
+**10 features de entrada:** caudal historico (log), precipitacion,
+temperatura media, humedad relativa, evaporacion, radiacion solar,
+y 4 variables ciclicas (seno/coseno del mes y dia del ano).
+
+**Target:** log1p(caudal) normalizado con MinMaxScaler.
+"""
+            )
 
     st.stop()
 
@@ -759,7 +809,7 @@ with tab_reconstruccion:
                     y_all,
                     epochs=epochs,
                     batch_size=batch_size,
-                    validation_split=0.10,
+                    validation_split=0.15,
                     callbacks=get_callbacks() + [ProgressCallback()],
                     verbose=0,
                 )
@@ -770,7 +820,7 @@ with tab_reconstruccion:
                 best_epoch = np.argmin(history.history["val_loss"]) + 1
                 best_val_loss = min(history.history["val_loss"])
 
-                n_val = max(1, int(len(X_all) * 0.10))
+                n_val = max(1, int(len(X_all) * 0.15))
                 X_val = X_all[-n_val:]
                 y_val_sc = y_all[-n_val:]
                 y_pred_sc = model.predict(X_val, verbose=0).flatten()
