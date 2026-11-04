@@ -426,9 +426,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Sin archivo: pagina de bienvenida ────────────────────────────────────────
+# ── Funcion de portada (reutilizable) ────────────────────────────────────────
 
-if archivo is None:
+
+def render_portada():
+    """Renderiza la pagina de bienvenida / inicio."""
     # ── Ilustracion hero ─────────────────────────────────────────────────
     t = np.linspace(0, 6 * np.pi, 300)
     np.random.seed(42)
@@ -476,7 +478,6 @@ if archivo is None:
     )
     st.plotly_chart(fig_hero, use_container_width=True)
 
-    # ── Contenido de bienvenida ──────────────────────────────────────────
     col_left, col_right = st.columns([3, 2], gap="large")
 
     with col_left:
@@ -640,6 +641,11 @@ Los gaps mayores al umbral configurado quedan sin reconstruir por precaucion.
 """
         )
 
+
+# ── Sin archivo: pagina de bienvenida ────────────────────────────────────────
+
+if archivo is None:
+    render_portada()
     st.stop()
 
 # ── Lectura del dataset ──────────────────────────────────────────────────────
@@ -728,13 +734,17 @@ pct_faltante = n_faltante / n_total * 100
 
 # ── Tabs principales ─────────────────────────────────────────────────────────
 
-tab_resumen, tab_reconstruccion, tab_datos = st.tabs(
+tab_inicio, tab_resumen, tab_reconstruccion, tab_datos = st.tabs(
     [
+        ":material/home: Inicio",
         ":material/bar_chart: Resumen",
         ":material/construction: Reconstruccion",
         ":material/table_chart: Datos",
     ]
 )
+
+with tab_inicio:
+    render_portada()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1: RESUMEN
