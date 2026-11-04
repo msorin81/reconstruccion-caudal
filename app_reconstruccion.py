@@ -429,6 +429,54 @@ st.markdown(
 # ── Sin archivo: pagina de bienvenida ────────────────────────────────────────
 
 if archivo is None:
+    # ── Ilustracion hero ─────────────────────────────────────────────────
+    t = np.linspace(0, 6 * np.pi, 300)
+    np.random.seed(42)
+    y_base = (
+        8 + 3 * np.sin(t) + 1.5 * np.sin(2.3 * t + 0.5)
+        + 5 * np.exp(-((t - 4.5) ** 2) / 0.3)
+        + 4 * np.exp(-((t - 10.5) ** 2) / 0.4)
+        + 6 * np.exp(-((t - 16) ** 2) / 0.5)
+        + 0.4 * np.random.randn(300)
+    )
+    y_base = np.clip(y_base, 1, None)
+
+    gap_start, gap_end = 105, 165
+    y_obs = y_base.copy()
+    y_obs[gap_start:gap_end] = np.nan
+    y_rec = np.full_like(y_base, np.nan)
+    y_rec[gap_start - 1 : gap_end + 1] = y_base[gap_start - 1 : gap_end + 1]
+
+    fig_hero = go.Figure()
+    fig_hero.add_vrect(
+        x0=t[gap_start], x1=t[gap_end - 1],
+        fillcolor="rgba(220,20,60,0.08)", line_width=0, layer="below",
+    )
+    fig_hero.add_trace(go.Scatter(
+        x=t, y=y_obs, mode="lines", name="Observado",
+        line=dict(color=COLOR_OBSERVED, width=2),
+    ))
+    fig_hero.add_trace(go.Scatter(
+        x=t, y=y_rec, mode="lines", name="Reconstruido (CNN-BiLSTM)",
+        line=dict(color=COLOR_RECONSTRUCTED, width=2, dash="dash"),
+    ))
+    fig_hero.add_annotation(
+        x=t[(gap_start + gap_end) // 2], y=max(y_base[gap_start:gap_end]) + 1.5,
+        text="Gap reconstruido", showarrow=False,
+        font=dict(size=11, color=COLOR_RECONSTRUCTED),
+    )
+    fig_hero.update_layout(
+        template="plotly_white",
+        height=220,
+        margin=dict(t=10, b=30, l=40, r=20),
+        xaxis=dict(showticklabels=False, title=""),
+        yaxis=dict(title="Caudal (m³/s)", title_font_size=11),
+        legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="center", x=0.5),
+        showlegend=True,
+    )
+    st.plotly_chart(fig_hero, use_container_width=True)
+
+    # ── Contenido de bienvenida ──────────────────────────────────────────
     col_left, col_right = st.columns([3, 2], gap="large")
 
     with col_left:
