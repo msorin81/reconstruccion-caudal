@@ -539,6 +539,51 @@ y 4 variables ciclicas (seno/coseno del mes y dia del ano).
 """
             )
 
+    with st.expander("Como funciona el entrenamiento con un dataset nuevo", expanded=False):
+        st.markdown(
+            f"""
+Cuando selecciona *Entrenar nuevo modelo*, la herramienta ejecuta el siguiente
+proceso con sus datos:
+
+**1. Preprocesamiento**
+
+Se aplica el mismo pipeline del proyecto: se imputan faltantes en variables
+climaticas usando el promedio historico por dia del ano, se crean las 4 variables
+ciclicas (seno/coseno del mes y dia), y se genera `Q_log_input` (log1p del caudal,
+con faltantes rellenados por promedio historico causal — solo usa datos pasados).
+
+**2. Construccion de secuencias**
+
+Solo los dias con caudal **observado** generan secuencias de entrenamiento.
+Cada secuencia tiene {TOTAL_LEN} pasos: {WINDOW} dias pasados + 1 dia objetivo
++ {HORIZON} dias futuros, con {len(FEATURES_V2)} features por paso. Los scalers
+(MinMaxScaler) se ajustan exclusivamente con los datos del dataset cargado.
+
+**3. Entrenamiento desde cero**
+
+Se construye un modelo nuevo con la **misma arquitectura y los mismos
+hiperparametros** optimizados en el proyecto. No se transfieren pesos de los
+modelos pre-entrenados, ya que los rangos de caudal y los patrones hidrologicos
+varian entre cuencas. El dataset se divide segun la proporcion seleccionada
+(80/20, 85/15 o 90/10) para entrenar y validar.
+
+**4. Evaluacion (NSE)**
+
+Tras el entrenamiento, se predicen los datos de validacion, se desnormalizan
+a m3/s y se calcula el coeficiente de Nash-Sutcliffe (NSE). Un NSE cercano
+a 1 indica alta confiabilidad; valores bajos (< 0.7) sugieren que las
+reconstrucciones pueden no ser confiables para esa estacion.
+
+**5. Reconstruccion de faltantes**
+
+El modelo recorre los dias sin caudal. Para cada uno, si el gap al que
+pertenece no excede el umbral configurado, se arma la secuencia de
+{TOTAL_LEN} pasos con las features climaticas (que si existen), el modelo
+predice el caudal normalizado, y se transforma de vuelta a m3/s. Los gaps
+mayores al umbral quedan sin reconstruir.
+"""
+        )
+
     st.stop()
 
 # ── Lectura del dataset ──────────────────────────────────────────────────────
