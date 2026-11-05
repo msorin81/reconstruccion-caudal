@@ -1,5 +1,5 @@
 r"""
-Herramienta de reconstruccion de series de caudal diario
+Herramienta de reconstrucción de series de caudal diario
 usando el modelo CNN-BiLSTM v2.
 
 Ejecutar localmente:
@@ -95,7 +95,7 @@ COLOR_BG_CARD = "#f8f9fa"
 # ── Configuracion de pagina ──────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Reconstruccion de Caudal",
+    page_title="Reconstrucción de Caudal",
     page_icon=":material/waves:",
     layout="wide",
 )
@@ -156,7 +156,7 @@ st.markdown(
 
 
 def detectar_columna_caudal(columnas: list[str]) -> str | None:
-    """Detecta automaticamente la columna de caudal en el dataset."""
+    """Detecta automáticamente la columna de caudal en el dataset."""
     candidatos = [
         "Caudal (m^3/s)",
         "caudal (m^3/s)",
@@ -278,7 +278,7 @@ def build_cnn_bilstm_v2(input_shape, hp):
 
 
 def calcular_nse(obs, pred):
-    """Nash-Sutcliffe Efficiency en escala original (m3/s)."""
+    """Nash-Sutcliffe Efficiency en escala original (m³/s)."""
     mean_obs = np.mean(obs)
     ss_res = np.sum((obs - pred) ** 2)
     ss_tot = np.sum((obs - mean_obs) ** 2)
@@ -358,8 +358,8 @@ with st.sidebar:
         "https://img.icons8.com/fluency/96/water.png",
         width=48,
     )
-    st.markdown("### Reconstruccion de Caudal")
-    st.caption("CNN-BiLSTM v2 | Proyecto de Maestria")
+    st.markdown("### Reconstrucción de Caudal")
+    st.caption("CNN-BiLSTM v2 | Proyecto de Maestría")
     st.divider()
 
     st.markdown("**1. Cargar datos**")
@@ -374,13 +374,13 @@ with st.sidebar:
 
     modelo_opcion = st.radio(
         "Fuente del modelo",
-        ["Modelo pre-entrenado", "Entrenar nuevo modelo"],
+        ["Modelo preentrenado", "Entrenar nuevo modelo"],
         label_visibility="collapsed",
     )
 
-    if modelo_opcion == "Modelo pre-entrenado":
+    if modelo_opcion == "Modelo preentrenado":
         estacion = st.selectbox(
-            "Estacion hidrrologica",
+            "Estación hidrológica",
             list(ESTACIONES.keys()),
             label_visibility="collapsed",
         )
@@ -390,10 +390,10 @@ with st.sidebar:
             st.caption(f":material/monitoring: NSE = {info_est['nse']}")
 
     st.divider()
-    st.markdown("**3. Parametros**")
+    st.markdown("**3. Parámetros**")
 
     umbral_gap = st.slider(
-        "Umbral maximo de gap (dias)",
+        "Umbral máximo de gap (días)",
         min_value=10,
         max_value=500,
         value=100,
@@ -402,26 +402,26 @@ with st.sidebar:
 
     if modelo_opcion == "Entrenar nuevo modelo":
         division = st.selectbox(
-            "Division train/val",
+            "División train/val",
             ["80/20", "85/15 (recomendado)", "90/10"],
             index=1,
         )
         val_split = {"80/20": 0.20, "85/15 (recomendado)": 0.15, "90/10": 0.10}[division]
-        epochs = st.slider("Epocas", 50, 300, 200, 10)
+        epochs = st.slider("Épocas", 50, 300, 200, 10)
         batch_size = st.selectbox("Batch size", [16, 32, 64, 128], index=1)
 
     st.divider()
     st.caption(
-        "Sube un dataset con columnas climaticas y de caudal. "
-        "La columna de caudal se detecta automaticamente."
+        "Sube un dataset con columnas climáticas y de caudal. "
+        "La columna de caudal se detecta automáticamente."
     )
 
 # ── Header principal ─────────────────────────────────────────────────────────
 
 st.markdown(
     '<div class="main-header">'
-    "<h1>Reconstruccion de Series de Caudal Diario</h1>"
-    "<p>Modelo CNN-BiLSTM v2 &mdash; Proyecto Aplicado de Maestria</p>"
+    "<h1>Reconstrucción de Series de Caudal Diario</h1>"
+    "<p>Modelo CNN-BiLSTM v2 &mdash; Proyecto Aplicado de Maestría</p>"
     "</div>",
     unsafe_allow_html=True,
 )
@@ -481,11 +481,11 @@ def render_portada():
     col_left, col_right = st.columns([3, 2], gap="large")
 
     with col_left:
-        st.markdown("#### Como funciona")
+        st.markdown("#### ¿Cómo funciona?")
         st.markdown(
             """
 1. **Suba su dataset** en la barra lateral (Excel o CSV).
-2. **Seleccione un modelo** pre-entrenado o entrene uno nuevo.
+2. **Seleccione un modelo** preentrenado o entrene uno nuevo.
 3. **Visualice y descargue** la serie reconstruida.
 
 El modelo CNN-BiLSTM v2 combina capas convolucionales (CNN) con redes
@@ -506,20 +506,20 @@ datos faltantes en series de caudal diario.
                     "rdcion_slar",
                     "Caudal *",
                 ],
-                "Descripcion": [
+                "Descripción": [
                     "Fecha (YYYY-MM-DD)",
-                    "Precipitacion diaria (mm)",
-                    "Temperatura media (C)",
+                    "Precipitación diaria (mm)",
+                    "Temperatura media (°C)",
                     "Humedad relativa media (%)",
-                    "Evaporacion calculada (mm)",
-                    "Radiacion solar (cal/cm2)",
-                    "Caudal medio diario (m3/s)",
+                    "Evaporación calculada (mm)",
+                    "Radiación solar (cal/cm²)",
+                    "Caudal medio diario (m³/s)",
                 ],
             }
         )
         st.dataframe(cols_df, hide_index=True, use_container_width=True)
         st.caption(
-            "* La columna de caudal se detecta automaticamente: "
+            "* La columna de caudal se detecta automáticamente: "
             "acepta `Caudal (m^3/s)`, `m^3/s`, `Caudal`, u otra variante."
         )
 
@@ -533,10 +533,10 @@ datos faltantes en series de caudal diario.
             )
         st.markdown("---")
         st.markdown(
-            "#### Entrenar para otra estacion\n"
-            "Si su dataset corresponde a una estacion diferente, "
+            "#### Entrenar para otra estación\n"
+            "Si su dataset corresponde a una estación diferente, "
             "seleccione *Entrenar nuevo modelo* en la barra lateral. "
-            "Se utiliza la misma arquitectura y los mismos hiperparametros "
+            "Se utiliza la misma arquitectura y los mismos hiperparámetros "
             "optimizados en el proyecto, aplicados a sus datos."
         )
 
@@ -548,7 +548,7 @@ datos faltantes en series de caudal diario.
                 """
 **Estructura de la red neuronal:**
 
-| Capa | Configuracion |
+| Capa | Configuración |
 |------|---------------|
 | **Entrada** | Secuencia de 23 pasos × 10 features |
 | **Conv1D** | 32 filtros, kernel 7, ReLU, padding same |
@@ -566,29 +566,29 @@ futuro → pasado), capturando dependencias temporales a largo plazo.
         with col_hp:
             st.markdown(
                 f"""
-**Hiperparametros y entrenamiento:**
+**Hiperparámetros y entrenamiento:**
 
-| Parametro | Valor |
+| Parámetro | Valor |
 |-----------|-------|
-| Ventana pasada | {WINDOW} dias |
-| Horizonte futuro | {HORIZON} dias |
+| Ventana pasada | {WINDOW} días |
+| Horizonte futuro | {HORIZON} días |
 | Secuencia total | {TOTAL_LEN} pasos |
 | Learning rate | 0.001 |
 | Optimizador | Adam |
 | Loss | MSE |
-| Division train/val | 80/20, 85/15 o 90/10 |
+| División train/val | 80/20, 85/15 o 90/10 |
 | EarlyStopping | patience 25 |
 | ReduceLROnPlateau | patience 12, factor 0.5 |
 
-**10 features de entrada:** caudal historico (log), precipitacion,
-temperatura media, humedad relativa, evaporacion, radiacion solar,
-y 4 variables ciclicas (seno/coseno del mes y dia del ano).
+**10 features de entrada:** caudal histórico (log), precipitación,
+temperatura media, humedad relativa, evaporación, radiación solar,
+y 4 variables cíclicas (seno/coseno del mes y día del año).
 
 **Target:** log1p(caudal) normalizado con MinMaxScaler.
 """
             )
 
-    with st.expander("Como funciona el entrenamiento con un dataset nuevo", expanded=False):
+    with st.expander("¿Cómo funciona el entrenamiento con un dataset nuevo?", expanded=False):
         st.markdown(
             f"""
 Cuando selecciona *Entrenar nuevo modelo*, la herramienta ejecuta el siguiente
@@ -597,47 +597,47 @@ proceso con sus datos:
 **1. Preprocesamiento**
 
 Se aplica el mismo pipeline del proyecto: se imputan faltantes en variables
-climaticas usando el promedio historico por dia del ano, se crean las 4 variables
-ciclicas (seno/coseno del mes y dia), y se genera `Q_log_input` (log1p del caudal,
-con faltantes rellenados por promedio historico causal — solo usa datos pasados).
+climáticas usando el promedio histórico por día del año, se crean las 4 variables
+cíclicas (seno/coseno del mes y día), y se genera `Q_log_input` (log1p del caudal,
+con faltantes rellenados por promedio histórico causal — solo usa datos pasados).
 
-**2. Construccion de secuencias (solo para entrenamiento)**
+**2. Construcción de secuencias (solo para entrenamiento)**
 
-Solo los dias con caudal **observado** generan secuencias de entrenamiento,
+Solo los días con caudal **observado** generan secuencias de entrenamiento,
 porque se necesita el valor real como target para que el modelo aprenda.
-Cada secuencia tiene {TOTAL_LEN} pasos: {WINDOW} dias pasados + 1 dia objetivo
-+ {HORIZON} dias futuros, con {len(FEATURES_V2)} features por paso. Los scalers
+Cada secuencia tiene {TOTAL_LEN} pasos: {WINDOW} días pasados + 1 día objetivo
++ {HORIZON} días futuros, con {len(FEATURES_V2)} features por paso. Los scalers
 (MinMaxScaler) se ajustan exclusivamente con los datos del dataset cargado.
 
 **3. Entrenamiento desde cero**
 
 Se construye un modelo nuevo con la **misma arquitectura y los mismos
-hiperparametros** optimizados en el proyecto. No se transfieren pesos de los
-modelos pre-entrenados, ya que los rangos de caudal y los patrones hidrologicos
-varian entre cuencas. El dataset se divide segun la proporcion seleccionada
+hiperparámetros** optimizados en el proyecto. No se transfieren pesos de los
+modelos preentrenados, ya que los rangos de caudal y los patrones hidrológicos
+varían entre cuencas. El dataset se divide según la proporción seleccionada
 (80/20, 85/15 o 90/10) para entrenar y validar.
 
-**4. Evaluacion (NSE)**
+**4. Evaluación (NSE)**
 
-Tras el entrenamiento, se predicen los datos de validacion, se desnormalizan
-a m3/s y se calcula el coeficiente de Nash-Sutcliffe (NSE). Un NSE cercano
+Tras el entrenamiento, se predicen los datos de validación, se desnormalizan
+a m³/s y se calcula el coeficiente de Nash-Sutcliffe (NSE). Un NSE cercano
 a 1 indica alta confiabilidad; valores bajos (< 0.7) sugieren que las
-reconstrucciones pueden no ser confiables para esa estacion.
+reconstrucciones pueden no ser confiables para esa estación.
 
-**5. Reconstruccion de faltantes**
+**5. Reconstrucción de faltantes**
 
-El modelo recorre los dias sin caudal. Para cada dia faltante, **no necesita
+El modelo recorre los días sin caudal. Para cada día faltante, **no necesita
 que el caudal exista** — necesita las **10 features de entrada**, que siempre
-estan disponibles: las 5 variables climaticas provienen de estaciones
-meteorologicas, las 4 ciclicas se calculan de la fecha, y `Q_log_input`
-se rellena con el promedio historico del dia del ano.
+están disponibles: las 5 variables climáticas provienen de estaciones
+meteorológicas, las 4 cíclicas se calculan de la fecha, y `Q_log_input`
+se rellena con el promedio histórico del día del año.
 
-Cada dia dentro de un gap se predice **independientemente** usando su contexto
-climatico real — no es una prediccion encadenada donde el error se acumula.
-Por eso el modelo puede reconstruir gaps de hasta {umbral_gap} dias consecutivos
-manteniendo una precision alta (NSE > 0.96 en las estaciones del proyecto).
+Cada día dentro de un gap se predice **independientemente** usando su contexto
+climático real — no es una predicción encadenada donde el error se acumula.
+Por eso el modelo puede reconstruir gaps de hasta {umbral_gap} días consecutivos
+manteniendo una precisión alta (NSE > 0.96 en las estaciones del proyecto).
 
-Los gaps mayores al umbral configurado quedan sin reconstruir por precaucion.
+Los gaps mayores al umbral configurado quedan sin reconstruir por precaución.
 """
         )
 
@@ -680,7 +680,7 @@ df_raw, col_caudal_original = estandarizar_columnas(df_raw)
 
 if TARGET_STD not in df_raw.columns:
     st.error(
-        "No se encontro una columna de caudal en el dataset.\n\n"
+        "No se encontró una columna de caudal en el dataset.\n\n"
         "Se buscaron variantes como: `Caudal (m^3/s)`, `m^3/s`, `Caudal`, `Q`.\n\n"
         f"**Columnas encontradas:** {', '.join(df_raw.columns.tolist())}"
     )
@@ -699,7 +699,7 @@ if "Fecha_" not in df_raw.columns:
 if faltantes_clima:
     st.error(
         f"Columnas faltantes: **{', '.join(faltantes_clima)}**\n\n"
-        "El dataset debe contener las columnas climaticas requeridas."
+        "El dataset debe contener las columnas climáticas requeridas."
     )
     st.stop()
 
@@ -738,7 +738,7 @@ tab_inicio, tab_resumen, tab_reconstruccion, tab_datos = st.tabs(
     [
         ":material/home: Inicio",
         ":material/bar_chart: Resumen",
-        ":material/construction: Reconstruccion",
+        ":material/construction: Reconstrucción",
         ":material/table_chart: Datos",
     ]
 )
@@ -772,7 +772,7 @@ with tab_resumen:
     fig_raw.update_layout(
         title="Serie de caudal original",
         xaxis_title="Fecha",
-        yaxis_title="Caudal (m3/s)",
+        yaxis_title="Caudal (m³/s)",
         template="plotly_white",
         height=380,
         margin=dict(t=40, b=40, l=60, r=20),
@@ -795,12 +795,12 @@ with tab_resumen:
             dias_rec = int(np.sum(gap_lengths[gap_lengths <= umbral_gap]))
             dias_nrec = int(np.sum(gap_lengths[gap_lengths > umbral_gap]))
 
-            st.markdown("##### Analisis de gaps")
+            st.markdown("##### Análisis de gaps")
             g1, g2, g3, g4, g5 = st.columns(5)
             g1.metric("Total gaps", f"{len(gap_lengths):,}")
-            g2.metric(f"Gaps ≤{umbral_gap}d", f"{n_gaps_rec:,}", delta=f"{dias_rec:,} dias")
-            g3.metric(f"Gaps >{umbral_gap}d", f"{n_gaps_nrec:,}", delta=f"{dias_nrec:,} dias", delta_color="inverse")
-            g4.metric("Longitud max.", f"{np.max(gap_lengths):,} d")
+            g2.metric(f"Gaps ≤{umbral_gap}d", f"{n_gaps_rec:,}", delta=f"{dias_rec:,} días")
+            g3.metric(f"Gaps >{umbral_gap}d", f"{n_gaps_nrec:,}", delta=f"{dias_nrec:,} días", delta_color="inverse")
+            g4.metric("Longitud máx.", f"{np.max(gap_lengths):,} d")
             g5.metric("Total faltantes", f"{n_faltante:,} d", delta=f"{pct_faltante:.1f}%", delta_color="inverse")
 
             fig_hist = go.Figure()
@@ -836,8 +836,8 @@ with tab_resumen:
                 annotation_position="top right",
             )
             fig_hist.update_layout(
-                title="Distribucion de longitud de gaps",
-                xaxis_title="Longitud (dias)",
+                title="Distribución de longitud de gaps",
+                xaxis_title="Longitud (días)",
                 yaxis_title="Frecuencia",
                 template="plotly_white",
                 height=300,
@@ -856,7 +856,7 @@ with tab_resumen:
 
 with tab_reconstruccion:
     if n_faltante == 0:
-        st.success("El dataset no tiene datos faltantes. No se requiere reconstruccion.")
+        st.success("El dataset no tiene datos faltantes. No se requiere reconstrucción.")
     else:
         with st.spinner("Construyendo secuencias..."):
             X_all, y_all, fechas_all, scaler_X, scaler_y = construir_secuencias(
@@ -873,18 +873,18 @@ with tab_reconstruccion:
         # ── Cargar o entrenar modelo ─────────────────────────────────────────
         model = None
 
-        if modelo_opcion == "Modelo pre-entrenado":
+        if modelo_opcion == "Modelo preentrenado":
             with st.spinner(f"Cargando modelo para {estacion}..."):
                 model = cargar_modelo_preentrenado(estacion)
 
             if model is not None:
                 st.success(
                     f"Modelo cargado: **CNN_BiLSTM_v2 ({estacion})** — "
-                    f"{model.count_params():,} parametros"
+                    f"{model.count_params():,} parámetros"
                 )
             else:
                 st.error(
-                    f"No se encontro el modelo para {estacion}. "
+                    f"No se encontró el modelo para {estacion}. "
                     "Seleccione 'Entrenar nuevo modelo'."
                 )
                 st.stop()
@@ -908,7 +908,7 @@ with tab_reconstruccion:
 
                 status_text.text(
                     f"Entrenando ({model.count_params():,} params) — "
-                    f"max {epochs} epocas..."
+                    f"máx. {epochs} épocas..."
                 )
 
                 class ProgressCallback(tf.keras.callbacks.Callback):
@@ -916,7 +916,7 @@ with tab_reconstruccion:
                         pct = min((epoch + 1) / epochs, 1.0)
                         progress_bar.progress(
                             pct,
-                            text=f"Epoca {epoch+1}/{epochs} | "
+                            text=f"Época {epoch+1}/{epochs} | "
                             f"loss: {logs.get('loss', 0):.6f} | "
                             f"val_loss: {logs.get('val_loss', 0):.6f}",
                         )
@@ -953,9 +953,9 @@ with tab_reconstruccion:
                 nse_val = calcular_nse(y_val_m3s, y_pred_m3s)
 
                 st.success(
-                    f"Modelo entrenado — Mejor epoca: {best_epoch} | "
+                    f"Modelo entrenado — Mejor época: {best_epoch} | "
                     f"val_loss: {best_val_loss:.6f} | "
-                    f"**NSE (validacion): {nse_val:.4f}**"
+                    f"**NSE (validación): {nse_val:.4f}**"
                 )
 
                 st.session_state["model"] = model
@@ -978,7 +978,7 @@ with tab_reconstruccion:
                     go.Scatter(
                         y=history.history["val_loss"],
                         mode="lines",
-                        name="Validacion",
+                        name="Validación",
                         line=dict(color=COLOR_RECONSTRUCTED),
                     )
                 )
@@ -990,7 +990,7 @@ with tab_reconstruccion:
                 )
                 fig_loss.update_layout(
                     title="Curva de entrenamiento",
-                    xaxis_title="Epoca",
+                    xaxis_title="Época",
                     yaxis_title="MSE Loss",
                     template="plotly_white",
                     height=300,
@@ -1005,7 +1005,7 @@ with tab_reconstruccion:
             df_full = st.session_state["df_full"]
 
         if model is None:
-            st.info("Presione el boton para entrenar el modelo.")
+            st.info("Presione el botón para entrenar el modelo.")
             st.stop()
 
         # ── Reconstruccion ───────────────────────────────────────────────────
@@ -1091,7 +1091,7 @@ with tab_reconstruccion:
         fig.update_layout(
             title="Serie de caudal reconstruida",
             xaxis_title="Fecha",
-            yaxis_title="Caudal (m3/s)",
+            yaxis_title="Caudal (m³/s)",
             template="plotly_white",
             height=450,
             margin=dict(t=50, b=50, l=60, r=20),
@@ -1105,7 +1105,7 @@ with tab_reconstruccion:
 
         # ── Estadisticas comparativas ────────────────────────────────────────
 
-        st.markdown("##### Serie sin reconstruccion vs con reconstruccion")
+        st.markdown("##### Serie sin reconstrucción vs con reconstrucción")
 
         q_sin = df_final.loc[obs_mask, "Caudal_m3s"].dropna()
         q_con = df_final.loc[obs_mask | rec_mask, "Caudal_m3s"].dropna()
@@ -1125,18 +1125,18 @@ with tab_reconstruccion:
 
             stats = pd.DataFrame(
                 {
-                    f"Sin reconstruccion": serie_stats(q_sin),
-                    f"Con reconstruccion": serie_stats(q_con),
+                    "Sin reconstrucción": serie_stats(q_sin),
+                    "Con reconstrucción": serie_stats(q_con),
                 },
                 index=[
-                    "N (dias)",
+                    "N (días)",
                     "Media",
                     "Desv. Est.",
-                    "Minimo",
+                    "Mínimo",
                     "Q25",
                     "Mediana",
                     "Q75",
-                    "Maximo",
+                    "Máximo",
                 ],
             )
             stats.iloc[0] = stats.iloc[0].astype(int)
@@ -1150,19 +1150,19 @@ with tab_reconstruccion:
                 fig_box.add_trace(
                     go.Box(
                         y=q_sin,
-                        name=f"Sin reconstruccion ({len(q_sin):,}d)",
+                        name=f"Sin reconstrucción ({len(q_sin):,}d)",
                         marker_color=COLOR_OBSERVED,
                     )
                 )
                 fig_box.add_trace(
                     go.Box(
                         y=q_con,
-                        name=f"Con reconstruccion ({len(q_con):,}d)",
+                        name=f"Con reconstrucción ({len(q_con):,}d)",
                         marker_color="#2ca02c",
                     )
                 )
                 fig_box.update_layout(
-                    yaxis_title="Caudal (m3/s)",
+                    yaxis_title="Caudal (m³/s)",
                     template="plotly_white",
                     height=380,
                     margin=dict(t=20, b=40, l=60, r=20),
@@ -1178,7 +1178,7 @@ with tab_reconstruccion:
 
 with tab_datos:
     if "df_final" not in st.session_state:
-        st.info("Ejecute la reconstruccion primero (pestana Reconstruccion).")
+        st.info("Ejecute la reconstrucción primero (pestaña Reconstrucción).")
     else:
         df_final = st.session_state["df_final"]
         df_display = df_final.copy()
@@ -1231,6 +1231,6 @@ with tab_datos:
 
 st.divider()
 st.caption(
-    "**CNN-BiLSTM v2** | Reconstruccion de series de caudal diario | "
-    "Proyecto Aplicado de Maestria — 2026"
+    "**CNN-BiLSTM v2** | Reconstrucción de series de caudal diario | "
+    "Proyecto Aplicado de Maestría — 2026"
 )
