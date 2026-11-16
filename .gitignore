@@ -17,3 +17,11 @@ mapas_cuencas/
 *.xls
 *.csv
 *.ipynb
+
+# Material publicado del trabajo de maestría
+!notebooks/*.ipynb
+!datos/**/*.xlsx
+!datos/**/*.csv
+!resultados/**/*.xlsx
+!resultados/**/*.csv
+!resultados/**/*.png

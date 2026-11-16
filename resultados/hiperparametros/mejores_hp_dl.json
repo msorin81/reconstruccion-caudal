@@ -1,0 +1,39 @@
+{
+  "LSTM_v2": {
+    "units": 64,
+    "dropout": 0.1,
+    "dense_units": 8,
+    "learning_rate": 0.001,
+    "tuner/epochs": 80,
+    "tuner/initial_epoch": 0,
+    "tuner/bracket": 0,
+    "tuner/round": 0,
+    "tiempo_busqueda_min": 435.6
+  },
+  "BiLSTM_v2": {
+    "units": 64,
+    "dropout": 0.1,
+    "dense_units": 32,
+    "learning_rate": 0.001,
+    "tuner/epochs": 80,
+    "tuner/initial_epoch": 27,
+    "tuner/bracket": 3,
+    "tuner/round": 3,
+    "tuner/trial_id": "0046",
+    "tiempo_busqueda_min": 725.9
+  },
+  "CNN_BiLSTM_v2": {
+    "units": 64,
+    "dropout": 0.1,
+    "filters": 32,
+    "kernel_size": 7,
+    "dense_units": 16,
+    "learning_rate": 0.001,
+    "tuner/epochs": 80,
+    "tuner/initial_epoch": 27,
+    "tuner/bracket": 2,
+    "tuner/round": 2,
+    "tuner/trial_id": "0157",
+    "tiempo_busqueda_min": 206.5
+  }
+}
