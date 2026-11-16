@@ -36,7 +36,9 @@ Las series incluyen solo los días con todas las variables climáticas disponibl
 | `hmd_rel_mdia` | Humedad relativa media diaria (%) |
 | `prcptcion` | Precipitación diaria (mm) |
 | `evp_clclada` | Evaporación calculada diaria |
-| `rdcion_slar` | Radiación solar diaria |
+| `rdcion_slar` | Radiación solar diaria: cal/cm²/día en Buga y Santander de Quilichao; MJ/m²/día en Totoró |
 | `Caudal (m^3/s)` / `m^3/s` | Caudal medio diario observado (m³/s), IDEAM |
 
 Los nombres de algunas columnas varían ligeramente entre estaciones (indicados con `/`). Los cuadernos los normalizan al cargar los datos.
+
+La radiación solar viene en unidades distintas según la estación. Esto no afecta los modelos porque cada estación tiene su propio modelo y sus variables se escalan por separado (MinMax a [0, 1]). Para comparar valores entre estaciones: 1 cal/cm²/día = 0,04184 MJ/m²/día.

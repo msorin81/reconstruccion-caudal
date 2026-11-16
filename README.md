@@ -1,5 +1,7 @@
 # Reconstrucción de caudal diario con aprendizaje profundo
 
+**Autor:** Oscar Mauricio Montaño Bolaños
+
 Repositorio de soporte del trabajo de maestría sobre reconstrucción de series de caudal diario en tres estaciones del suroccidente colombiano: **Buga** (Valle del Cauca), **Santander de Quilichao** y **Totoró** (Cauca).
 
 Contiene los datos de entrada, los cuadernos de Python con todo el proceso (comparación de modelos de árboles, modelos de aprendizaje profundo, validación y reconstrucción), las series finales reconstruidas, los modelos entrenados y una aplicación web para aplicar los modelos a nuevos datos.
