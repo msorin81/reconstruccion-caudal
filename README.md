@@ -6,6 +6,8 @@ Repositorio de soporte del trabajo de maestría sobre reconstrucción de series 
 
 Contiene los datos de entrada, los cuadernos de Python con todo el proceso (comparación de modelos de árboles, modelos de aprendizaje profundo, validación y reconstrucción), las series finales reconstruidas, los modelos entrenados y una aplicación web para aplicar los modelos a nuevos datos.
 
+![Series de caudal reconstruidas con CNN-BiLSTM para las tres estaciones](docs/banner_series_reconstruidas.png)
+
 ## Resultados principales
 
 El modelo **CNN-BiLSTM** fue seleccionado para la reconstrucción final tras comparar siete modelos (cuatro ML tradicionales y tres DL) en cada estación. La tabla muestra el NSE mediano sobre 20 máscaras aleatorias con 15% de datos faltantes:
