@@ -2,9 +2,13 @@
 
 **Autor:** Oscar Mauricio Montaño Bolaños
 
+**Repositorio:** [https://github.com/msorin81/reconstruccion-caudal](https://github.com/msorin81/reconstruccion-caudal)
+
+**Aplicación web:** [https://reconstruccion-caudal-adbxyjguvpmeuknxtwh8q9.streamlit.app](https://reconstruccion-caudal-adbxyjguvpmeuknxtwh8q9.streamlit.app/)
+
 Repositorio de soporte del trabajo de maestría sobre reconstrucción de series de caudal diario en tres estaciones del suroccidente colombiano: **Buga** (Valle del Cauca), **Santander de Quilichao** y **Totoró** (Cauca).
 
-Contiene los datos de entrada, los cuadernos de Python con todo el proceso (comparación de modelos de árboles, modelos de aprendizaje profundo, validación y reconstrucción), las series finales reconstruidas, los modelos entrenados y una aplicación web para aplicar los modelos a nuevos datos.
+Contiene los datos de entrada, los cuadernos de Python con todo el proceso (comparación de modelos de árboles, modelos de aprendizaje profundo, validación y reconstrucción), las series finales reconstruidas, los modelos entrenados y una aplicación web interactiva para aplicar los modelos CNN-BiLSTM a nuevos datos.
 
 ![Series de caudal reconstruidas con CNN-BiLSTM para las tres estaciones](docs/banner_series_reconstruidas.png)
 
@@ -92,11 +96,19 @@ Los cuatro modelos usan 31 features de ingeniería por fila dentro de `Iterative
 
 Hiperparámetros optimizados con `RandomizedSearchCV(n_iter=15)` × `TimeSeriesSplit(3 folds)` ([`mejores_hp_ml.json`](resultados/hiperparametros/mejores_hp_ml.json)).
 
+## Aplicación web
+
+La aplicación permite cargar un archivo con variables climáticas diarias y obtener la serie de caudal reconstruida usando los modelos CNN-BiLSTM entrenados. Está desplegada en Streamlit Cloud:
+
+**[Abrir aplicación](https://reconstruccion-caudal-adbxyjguvpmeuknxtwh8q9.streamlit.app/)**
+
+El código fuente es [`app_reconstruccion.py`](app_reconstruccion.py) y los modelos que usa están en [`modelos/`](modelos/).
+
 ## Cómo ejecutar
 
 Requiere Python 3.11 o superior.
 
-**Aplicación:**
+**Aplicación (ejecución local):**
 
 ```bash
 pip install -r requirements.txt
