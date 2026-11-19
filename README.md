@@ -1,6 +1,6 @@
 # Reconstrucción de caudal diario con aprendizaje profundo
 
-**Autor:** Oscar Mauricio Montaño Bolaños
+**Autores:** Oscar Mauricio Montaño Bolaños, Juan José Andrade
 
 **Repositorio:** [https://github.com/msorin81/reconstruccion-caudal](https://github.com/msorin81/reconstruccion-caudal)
 
