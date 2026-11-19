@@ -104,6 +104,12 @@ La aplicación permite cargar un archivo con variables climáticas diarias y obt
 
 El código fuente es [`app_reconstruccion.py`](app_reconstruccion.py) y los modelos que usa están en [`modelos/`](modelos/).
 
+## Video explicativo
+
+Presentación en video del proyecto de grado con la descripción de la metodología, los resultados y la demostración de la aplicación web:
+
+📹 [`docs/video_proyecto_grado.mp4`](docs/video_proyecto_grado.mp4)
+
 ## Cómo ejecutar
 
 Requiere Python 3.11 o superior.

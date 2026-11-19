@@ -26,3 +26,4 @@ mapas_cuencas/
 !resultados/**/*.csv
 !resultados/**/*.png
 !docs/**/*.png
+!docs/**/*.mp4
