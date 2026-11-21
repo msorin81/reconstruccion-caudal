@@ -14,17 +14,19 @@ Contiene los datos de entrada, los cuadernos de Python con todo el proceso (comp
 
 ## Resultados principales
 
-El modelo **CNN-BiLSTM** fue seleccionado para la reconstrucción final tras comparar siete modelos (cuatro ML tradicionales y tres DL) en cada estación. La tabla muestra el NSE mediano sobre 20 máscaras aleatorias con 15% de datos faltantes:
+El modelo **CNN-BiLSTM** fue seleccionado para la reconstrucción final tras comparar siete modelos (cuatro ML tradicionales y tres DL) en cada estación. La tabla muestra el NSE medio sobre 20 máscaras aleatorias con 15 % de datos faltantes. Para los modelos DL corresponde al Experimento 1 (vacíos aleatorios) con la división entrenamiento/validación 90/10, la misma del modelo final:
 
 | Modelo | Tipo | Buga | Santander | Totoró |
 |--------|------|-----:|----------:|-------:|
-| MissForest (RF) | ML | 0.56 | 0.68 | 0.79 |
-| XGBoost | ML | 0.56 | 0.68 | 0.79 |
-| CatBoost | ML | 0.56 | 0.68 | 0.79 |
-| LightGBM | ML | 0.56 | 0.68 | 0.79 |
-| LSTM | DL | 0.90 | 0.93 | 0.95 |
-| BiLSTM | DL | 0.91 | 0.94 | 0.96 |
-| **CNN-BiLSTM** | **DL** | **0.93** | **0.95** | **0.98** |
+| MissForest (RF) | ML | 0.54 | 0.65 | 0.76 |
+| XGBoost | ML | 0.56 | 0.69 | 0.78 |
+| CatBoost | ML | 0.55 | 0.68 | 0.79 |
+| LightGBM | ML | 0.56 | 0.68 | 0.78 |
+| LSTM | DL | 0.84 | 0.93 | 0.97 |
+| BiLSTM | DL | 0.84 | 0.94 | 0.95 |
+| **CNN-BiLSTM** | **DL** | **0.99** | **0.99** | **0.97** |
+
+Los resultados completos por porcentaje de vacíos, división y experimento están en las salidas de los cuadernos `01_ml_comparacion_*` y `02_dl_reconstruccion_*`.
 
 Los modelos ML usan 31 features de ingeniería por fila (lags, leads, interacciones, codificación cíclica) dentro de `IterativeImputer`, optimizados con `RandomizedSearchCV`. Los modelos DL reciben una ventana de 23 días con 10 variables.
 
